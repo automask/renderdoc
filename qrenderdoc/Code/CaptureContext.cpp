@@ -230,6 +230,10 @@ CaptureContext::CaptureContext(PersistantConfig &cfg) : m_Config(cfg)
       LoadExtension(e.package);
     }
   }
+
+  // =========add my code=========
+  AddMyMenu();
+  // =============================
 }
 
 CaptureContext::~CaptureContext()
@@ -492,6 +496,182 @@ rdcstr CaptureContext::LoadExtension(rdcstr name)
 
   return ret;
 }
+
+// =========add my code=========
+// =============================
+static QString QStr(const rdcstr &x)
+{
+  return QFormatStr("%1").arg(x);
+}
+
+static bool InList(const QString &name)
+{
+  static const QString list_names[] = {
+      lit("DrawIndexedInstanced"), lit("DrawInstanced"), lit("IndirectDrawIndexed"),
+      // lit("ExecuteIndirect"),
+  };
+
+  for(auto &item : list_names)
+  {
+    if(name.contains(item, Qt::CaseSensitivity::CaseInsensitive))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+static MainWindow *GetMainWindow()
+{
+  foreach(QWidget *widget, qApp->topLevelWidgets())
+  {
+    MainWindow *mainWin = qobject_cast<MainWindow *>(widget);
+    if(mainWin)
+    {
+      return mainWin;
+    }
+  }
+  return nullptr;
+}
+
+/*
+
+static void GetPipelineShaderInfo(CaptureContext *context, IReplayController *controller)
+{
+  auto &pipeline = controller->GetPipelineState();
+  auto shader_id = pipeline.GetShader(ShaderStage::Vertex);
+  auto entry = controller->GetShaderEntryPoints(shader_id);
+  if(entry.size() > 0)
+  {
+    // msg += QFormatStr("entry : %1").arg(entry[0].name); // shader entry name
+  }
+}
+
+static int GetAllShader(CaptureContext *context, IReplayController *controller)
+{
+  auto resources = controller->GetResources();
+  int num = 0;
+  for(auto& res : resources)
+  {
+    if(res.type == ResourceType::Shader)
+    {
+      auto id = res.resourceId;
+      auto usage = controller->GetUsage(id); // 0 | nothing
+      for(auto& use : usage)
+      {
+        auto event_id = use.eventId;
+        num++;
+      }
+    }
+  }
+  return num;
+}
+*/
+
+static void GetDrawcalls(CaptureContext *context, IReplayController *controller,
+                         const rdcarray<ActionDescription> &lists, rdcarray<rdcstr> &names)
+{
+  for(auto root : lists)
+  {
+    auto name = root.GetName(controller->GetStructuredFile());
+    auto q_name = QStr(name);
+    if(InList(q_name))
+    {
+      auto event_id = root.eventId;
+      {
+        controller->SetFrameEvent(event_id, true);
+        auto &pipeline = controller->GetPipelineState();
+        // ResourceId pipeline = context->CurPipelineState().GetGraphicsPipelineObject();
+
+        if(pipeline.IsCaptureD3D12())
+        {
+          names.push_back(context->GetResourceNameUnsuffixed(pipeline.GetGraphicsPipelineObject()));
+        }
+      }
+    }
+
+    GetDrawcalls(context, controller, root.children, names);
+  }
+}
+
+static void MyProcess(CaptureContext *context)
+{
+  QString msg;
+
+  context->Replay().BlockInvoke([&](IReplayController *controller) {
+    if(0)
+    {
+      rdcarray<rdcstr> action_names;
+      GetDrawcalls(context, controller, controller->GetRootActions(), action_names);
+
+      msg += QFormatStr("num : %1\n").arg(action_names.size());
+
+      for(auto &name : action_names)
+      {
+        msg += QFormatStr("%1\n").arg(name);
+      }
+    }
+  });
+
+  static bool is_not_done = true;
+  static int num = 500;
+  static float percent = 0.0f;
+
+  {
+    LambdaThread *thread = new LambdaThread([&]() {
+      for(int i = 0; i < num; i++)
+      {
+        percent = i / (float)(num - 1);
+        QThread::msleep(10);
+      }
+
+      is_not_done = false;
+    });
+
+    thread->setName(lit("Process"));
+    thread->selfDelete(true);
+    thread->start();
+
+    // QElapsedTimer loadTimer;
+    // loadTimer.start();
+
+    ShowProgressDialog(
+        GetMainWindow(), lit("Hello"), [&]() { return !is_not_done; }, [&]() { return percent; });
+
+    // reset
+    is_not_done = true;
+    percent = 0.0f;
+  }
+
+  if(0)
+  {
+    // cannot show in loop
+    QMessageBox box;
+    box.setWindowTitle(lit("Info"));
+    box.setText(msg.isEmpty() ? lit("None") : msg);
+    box.resize(600, 320);
+    box.exec();
+  }
+}
+
+void CaptureContext::AddMyMenu()
+{
+  static bool once_add = true;
+  if(once_add)
+  {
+    rdcarray<rdcstr> _names;
+    _names.emplace_back("MyTool");
+
+    QMenu *_menu = m_MainWindow->GetBaseMenu(WindowMenu::Tools, _names[0]);
+
+    std::function<void()> _callback = [this]() { MyProcess(this); };
+
+    AddSortedMenuItem(_menu, false, _names, _callback);
+    once_add = false;
+  }
+}
+
+// =============================
 
 void CaptureContext::RegisterWindowMenu(WindowMenu base, const rdcarray<rdcstr> &submenus,
                                         ExtensionCallback callback)

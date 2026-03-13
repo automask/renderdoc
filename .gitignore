@@ -29,7 +29,6 @@ obj/
 *.opensdf
 *.VC.*db
 .vs/
-.vscode/
 *.pdb
 *.sln.ide/
 *.so
@@ -50,3 +49,5 @@ qrenderdoc/3rdparty/pyside
 .DS_Store
 plugins-*/
 __pycache__
+config.bat
+node_modules

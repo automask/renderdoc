@@ -1361,6 +1361,17 @@ void MainWindow::PopulateRecentCaptureSettings()
   ui->menu_Recent_Capture_Settings->addAction(ui->action_Clear_Capture_Settings_History);
 }
 
+// =========add my code=========
+void MainWindow::on_action_CppTest_triggered()
+{
+  QMessageBox msgBox;
+  msgBox.setText(lit("Hello Cpp Test"));
+  msgBox.setWindowTitle(lit("Info"));
+  msgBox.resize(500, 300);
+  msgBox.exec();
+}
+// =============================
+
 void MainWindow::on_action_Clear_Reported_Bugs_triggered()
 {
   ui->menu_Reported_Bugs->clear();
