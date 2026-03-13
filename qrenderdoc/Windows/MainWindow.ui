@@ -55,6 +55,9 @@
     <addaction name="action_RemoveExternalFiles"/>
     <addaction name="separator"/>
     <addaction name="action_Start_Replay_Loop"/>
+	
+	<addaction name="action_CppTest"/>
+	
     <addaction name="action_Create_RGP_Profile"/>
     <addaction name="action_Open_RGP_Profile"/>
     <addaction name="separator"/>
@@ -433,6 +436,13 @@
     <string>Start Replay &amp;Loop</string>
    </property>
   </action>
+
+    <action name="action_CppTest">
+	    <property name="text">
+		    <string>Cpp Test</string>
+	    </property>
+    </action>
+	 
   <action name="action_Counter_Viewer">
    <property name="text">
     <string>Performance &amp;Counter Viewer</string>

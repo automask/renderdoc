@@ -189,6 +189,10 @@ private slots:
   void on_action_Check_for_Updates_triggered();
   void on_action_Clear_Reported_Bugs_triggered();
 
+  // =========add my code=========
+  void on_action_CppTest_triggered();
+  // =============================
+
   // manual slots
   void saveLayout_triggered();
   void loadLayout_triggered();

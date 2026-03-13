@@ -86,6 +86,10 @@ public:
   void RegisterContextMenu(ContextMenu base, const rdcarray<rdcstr> &submenus,
                            ExtensionCallback callback) override;
 
+  // =========add my code=========
+  void AddMyMenu();
+  // =============================
+
   void MenuDisplaying(ContextMenu contextMenu, QMenu *menu,
                       const ExtensionCallbackData &data) override;
   void MenuDisplaying(PanelMenu panelMenu, QMenu *menu, QWidget *extensionButton,
